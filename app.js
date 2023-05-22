@@ -9,12 +9,11 @@ app.get("/all-users", (req, res) => {
   res.status(200).json({ data: usersList });
 });
 
-//single user is showing a 200 status in postman and I have no errors in the terminal and yet The number isnt pulling up in postman
-//I'm not sure where I went wrong
 app.get("/single-user/:phoneNumber", (req, res) => {
+  const compareMe = req.params.phoneNumber;
   let result = usersList.find(findPhoneNumber);
   function findPhoneNumber(phoneNumber) {
-    return phoneNumber.number;
+    return phoneNumber.phone === compareMe;
   }
   res.status(200).json({ data: result });
 });
@@ -34,15 +33,15 @@ app.post("/new-user", (req, res) => {
   const newUser = {
     gender: req.body.gender,
     name: {
-      title: req.body.title,
-      first: req.body.first,
-      last: req.body.last,
+      title: req.name.title,
+      first: req.name.first,
+      last: req.name.last,
     },
     location: {
-      city: req.body.city,
-      state: req.body.state,
-      country: req.body.country,
-      postcode: req.body.postcode,
+      city: req.location.city,
+      state: req.location.state,
+      country: req.location.country,
+      postcode: req.location.postcode,
     },
     email: req.body.email,
     phone: req.body.email,
@@ -55,22 +54,35 @@ app.post("/new-user", (req, res) => {
 });
 
 //I tried to follow what we went over in the express-intro but I am I totally at a loss on this one
-app.put("/update-user/:email", (req, res) => {
-  const email = req.params.email;
-  const findIndex = usersList.findIndex((users) => {
-    users.email === cell;
+app.put("/update-user/:userEmail", (req, res) => {
+  console.log("hello");
+
+  const email = req.params.userEmail;
+  console.log(email);
+  const findIndex = usersList.findIndex((user) => {
+    return user.email === email;
   });
+  console.log(usersList);
   if (findIndex === -1) {
-    res.status(400).json({ success: false, message: "user not found" });
+    return res.status(400).json({ success: false, message: "user not found" });
   }
-  const originalUserInfo = usersList[findIndex];
+  const user = usersList[findIndex];
+  const updateUserInfo = { ...user };
 
-  const cell = req.body.cell;
-
-  const updateUserInfo = { ...originalUserInfo };
-  if (cell) {
-    updateUserInfo.cell = cell;
+  for (let key in req.body) {
+    if (typeof req.body[key] === "object") {
+      updateUserInfo[key] = {
+        ...updateUserInfo[key],
+        ...req.body[key],
+      };
+    } else {
+      updateUserInfo[(key = req.body[key])];
+    }
   }
+  console.log("after", updateUserInfo);
+  usersList.splice(findIndex, 1, updateUserInfo);
+
+  res.status(200).json({ success: true });
 });
 
 app.delete("/delete-user/:cellNumber", (req, res) => {
